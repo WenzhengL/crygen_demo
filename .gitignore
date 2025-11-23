@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs
+log
+err
+local_log/
+*.log
+
+# 中间结果、运行输出
+pipeline_run/
+outputs/
+generate/
+test/
+*.ckpt
+*.pt
+*.pth
+*.npz
+*.npy
+
+# Jupyter
+*.ipynb_checkpoints/
+
+# dpdispatcher / job outputs（如有）
+job_*/
