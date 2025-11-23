@@ -174,15 +174,17 @@ def _stage_support(job_root: Path) -> Path:
             src = C.TEST_ROOT / name
             if src.exists():
                 tf.add(src, arcname=name, filter=_support_filter)
-        # Stage mattergen source (exclude heavy checkpoint directory)
+        # Stage mattergen source (exclude heavy checkpoint directory; keep data-release for evaluation)
         mg_root = C.MATTERGEN_ROOT
         if mg_root.exists():
             def _mg_filter(tarinfo: tarfile.TarInfo) -> tarfile.TarInfo | None:
                 parts = Path(tarinfo.name).parts
                 if not parts:
                     return tarinfo
-                # Skip checkpoints and large data-release assets to keep archive lean
-                if len(parts) > 1 and parts[1] in {"checkpoints", "data-release", "datasets"}:
+                # Skip checkpoints and datasets (very large),
+                # but KEEP data-release so evaluation can access
+                # reference_MP2020correction.gz and mp_20.zip.
+                if len(parts) > 1 and parts[1] in {"checkpoints", "datasets"}:
                     return None
                 if "__pycache__" in parts:
                     return None
