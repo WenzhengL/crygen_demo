@@ -1,0 +1,27 @@
+{
+  "checkpoint": "/root/crygen/crygen_demo_new/pipeline_run_local_test2/finetune_outputs/checkpoints/last.ckpt",
+  "metrics": {
+    "baseline": {
+      "loss_val": 0.8483152389526367,
+      "pos_val": 6.261017322540283,
+      "cell_val": 0.024572469294071198,
+      "atomic_numbers_val": 0.19764110445976257
+    },
+    "finetuned": {
+      "loss_val": 0.8735052943229675,
+      "pos_val": 5.381730079650879,
+      "cell_val": 0.02019239030778408,
+      "atomic_numbers_val": 0.31513988971710205
+    },
+    "delta": {
+      "loss_val": 0.02519005537033081,
+      "pos_val": -0.8792872428894043,
+      "cell_val": -0.004380078986287117,
+      "atomic_numbers_val": 0.11749878525733948
+    }
+  },
+  "generation_dir": "/root/crygen/crygen_demo_new/pipeline_run_local_test2/generation/results",
+  "generation_eval": {
+    "error": "evaluation failed: 'NoneType' object is not subscriptable"
+  }
+}

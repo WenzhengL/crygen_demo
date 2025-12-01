@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 # Local imports (available because script placed in crygen_demo tree)
 from finetune.local import FinetuneOptions, parse_args as parse_finetune_cli, run_finetune, build_overrides, compose_config
@@ -251,10 +251,46 @@ def _evaluate_generated_structures(gen_dir: Path) -> Dict[str, Any]:
     return {"error": "no metrics file produced"}
 
 
-def main(argv: Iterable[str] | None = None) -> None:
-    parser = _build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
-    pipeline_root = _abs(args.pipeline_root)
+def run_pipeline(
+    data_root: Path = DEFAULT_DATA_ROOT,
+    base_model_dir: Path = DEFAULT_BASE_MODEL_DIR,
+    pipeline_root: Path = DEFAULT_PIPELINE_ROOT,
+    max_epochs: int = 1,
+    train_batch_size: int = 32,
+    val_batch_size: int = 32,
+    num_workers: int = 4,
+    devices: int = 1,
+    accelerator: str = "auto",
+    precision: str = "32",
+    num_gen: int = DEFAULT_NUM_GEN,
+    use_wandb: bool = False,
+    properties_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Programmatic entry point for the finetune-evaluate-generate pipeline.
+
+    This mirrors the CLI behaviour of :func:`main` but is easier to
+    integrate from other projects (e.g. CrysGen's MatterGen backend).
+
+    ``properties_config`` is reserved for future extensions where
+    custom properties influence finetuning or generation configuration.
+    """
+
+    args = argparse.Namespace(
+        data_root=_abs(data_root),
+        base_model_dir=_abs(base_model_dir),
+        pipeline_root=_abs(pipeline_root),
+        max_epochs=max_epochs,
+        train_batch_size=train_batch_size,
+        val_batch_size=val_batch_size,
+        num_workers=num_workers,
+        devices=devices,
+        accelerator=accelerator,
+        precision=precision,
+        num_gen=num_gen,
+        use_wandb=use_wandb,
+    )
+
+    pipeline_root = _abs(pipeline_root)
     pipeline_root.mkdir(parents=True, exist_ok=True)
 
     ckpt = _finetune(args)
@@ -262,14 +298,49 @@ def main(argv: Iterable[str] | None = None) -> None:
     gen_dir = _generate(args, ckpt)
     gen_eval = _evaluate_generated_structures(gen_dir)
 
-    summary = {
-        "checkpoint": str(ckpt),
+    summary: Dict[str, Any] = {
+        "checkpoint": ckpt,
         "metrics": metrics,
-        "generation_dir": str(gen_dir),
+        "generation_dir": gen_dir,
         "generation_eval": gen_eval,
     }
-    (pipeline_root / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
-    print("[pipeline] summary written to", pipeline_root / "summary.json")
+
+    # Keep CLI behaviour: always persist a JSON summary to disk.
+    (pipeline_root / "summary.json").write_text(
+        json.dumps(
+            {
+                "checkpoint": str(ckpt),
+                "metrics": metrics,
+                "generation_dir": str(gen_dir),
+                "generation_eval": gen_eval,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+    return summary
+
+
+def main(argv: Iterable[str] | None = None) -> None:
+    parser = _build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+
+    summary = run_pipeline(
+        data_root=args.data_root,
+        base_model_dir=args.base_model_dir,
+        pipeline_root=args.pipeline_root,
+        max_epochs=args.max_epochs,
+        train_batch_size=args.train_batch_size,
+        val_batch_size=args.val_batch_size,
+        num_workers=args.num_workers,
+        devices=args.devices,
+        accelerator=args.accelerator,
+        precision=args.precision,
+        num_gen=args.num_gen,
+        use_wandb=args.use_wandb,
+    )
+    print("[pipeline] summary written to", _abs(args.pipeline_root) / "summary.json")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+{
+  "solid_electrolyte": {
+    "dtype": "int64",
+    "kind": "binary"
+  }
+}
